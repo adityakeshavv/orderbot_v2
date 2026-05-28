@@ -7,29 +7,42 @@ import './index.css'
 
 function Guard({ children }) {
   const { user } = useAuth()
-  return user ? children : <Navigate to="/login" replace />
+  
+  // Check localStorage directly as fallback
+  const hasToken = localStorage.getItem('token')
+  
+  if (!user && !hasToken) return <Navigate to="/login" replace />
+  return children
 }
 
 function GoogleCallback() {
-  const navigate          = useNavigate()
-  const { loginWithToken } = useAuth()
+  const navigate            = useNavigate()
+  const { loginWithToken }  = useAuth()
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const token  = params.get('token')
-    const name   = params.get('name')
+    const name   = decodeURIComponent(params.get('name') || '')
     const email  = params.get('email')
     const role   = params.get('role')
+
     if (token) {
       loginWithToken(token, { name, email, role })
-      navigate('/')
+      // Small timeout to let React re-render with the new user state
+      setTimeout(() => navigate('/'), 100)
     } else {
       navigate('/login')
     }
   }, []) // eslint-disable-line
 
   return (
-    <p style={{ color: 'white', padding: 20 }}>Signing you in...</p>
+    <div style={{
+      display: 'flex', alignItems: 'center',
+      justifyContent: 'center', height: '100vh',
+      color: 'white', fontSize: 16,
+    }}>
+      Signing you in...
+    </div>
   )
 }
 
